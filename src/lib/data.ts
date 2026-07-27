@@ -100,3 +100,13 @@ export const featuredProducts = products.filter((p) => p.featured);
 export function getSeller(id: string): Seller | undefined {
   return sellers.find((s) => s.id === id);
 }
+
+export function getProductBySlug(slug: string): Product | undefined {
+  return products.find((p) => p.slug === slug);
+}
+
+export function getRelatedProducts(product: Product, limit = 4): Product[] {
+  return products
+    .filter((p) => p.category === product.category && p.id !== product.id)
+    .slice(0, limit);
+}

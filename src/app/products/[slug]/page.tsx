@@ -1,0 +1,70 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import Breadcrumb from "@/components/ui/Breadcrumb";
+import ProductGallery from "@/components/product/ProductGallery";
+import ProductInfo from "@/components/product/ProductInfo";
+import SellerMiniCard from "@/components/product/SellerMiniCard";
+import RelatedProducts from "@/components/product/RelatedProducts";
+import {
+  products,
+  getProductBySlug,
+  getRelatedProducts,
+  getSeller,
+} from "@/lib/data";
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateStaticParams() {
+  return products.map((p) => ({ slug: p.slug }));
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = getProductBySlug(slug);
+  if (!product) {
+    return { title: "Product not found" };
+  }
+  return {
+    title: product.name,
+    description: product.description,
+  };
+}
+
+export default async function ProductDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  const product = getProductBySlug(slug);
+  if (!product) notFound();
+
+  const seller = getSeller(product.sellerId);
+  const related = getRelatedProducts(product, 4);
+
+  return (
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: product.category, href: `/products?category=${product.category}` },
+          { label: product.name },
+        ]}
+      />
+
+      <div className="mt-6 grid gap-8 md:grid-cols-2 lg:gap-12">
+        <ProductGallery
+          src={product.image}
+          alt={`${product.name} by ${seller?.name ?? "a Handcrafted Haven artisan"}`}
+        />
+        <ProductInfo product={product} />
+     </div>
+
+      {seller && (
+        <div className="mt-10">
+          <SellerMiniCard seller={seller} />
+       </div>
+      )}
+
+      <RelatedProducts products={related} />
+   </div>
+  );
+}
