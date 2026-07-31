@@ -49,8 +49,8 @@ const seller = {
   name: "Sophia Chen",
   specialty: "Ceramic Artist",
   location: "Portland, OR",
-  avatar: "/sellers/sophia.jpg",
-  coverImage: "/sellers/sophia-cover.jpg",
+  avatar: "/sellers/sofia.jpg",
+  coverImage: "/sellers/sofiacover.jpg",
   joinDate: "Joined March 2023",
   description:
     "Welcome to my studio! I craft handmade ceramics inspired by natural forms and traditional techniques. Each piece is one-of-a-kind, made with locally-sourced clay and glazes.",
@@ -64,7 +64,7 @@ const seller = {
     {
       id: "1",
       name: "Textured Raku Bowl",
-      image: "/products/bowl-1.jpg",
+      image: "/products/natural-soy-candle.webp",
       price: 85,
       rating: 5,
       reviewCount: 23,
@@ -72,7 +72,7 @@ const seller = {
     {
       id: "2",
       name: "Minimalist Vase Set",
-      image: "/products/vase-1.jpg",
+      image: "/products/natural-soy-candle.webp",
       price: 120,
       rating: 4.8,
       reviewCount: 18,
@@ -80,7 +80,7 @@ const seller = {
     {
       id: "3",
       name: "Glazed Dinnerware",
-      image: "/products/dinnerware-1.jpg",
+      image: "/products/natural-soy-candle.webp",
       price: 65,
       rating: 5,
       reviewCount: 31,
@@ -88,7 +88,7 @@ const seller = {
     {
       id: "4",
       name: "Sculptural Planter",
-      image: "/products/planter-1.jpg",
+      image: "/products/natural-soy-candle.webp",
       price: 95,
       rating: 4.9,
       reviewCount: 12,
@@ -101,7 +101,7 @@ const seller = {
       rating: 5,
       text: "The bowl arrived in perfect condition and is even more beautiful in person. Sophia's attention to detail is incredible. Highly recommend!",
       date: "2 weeks ago",
-      avatar: "/avatars/emma.jpg",
+      avatar: "/avatars/john-kimani.webp",
     },
     {
       id: "r2",
@@ -109,7 +109,7 @@ const seller = {
       rating: 5,
       text: "Exactly as described. The glazing is stunning and each piece feels special. Great communication throughout the process.",
       date: "1 month ago",
-      avatar: "/avatars/marcus.jpg",
+      avatar: "/avatars/john-kimani.webp",
     },
     {
       id: "r3",
@@ -117,7 +117,7 @@ const seller = {
       rating: 4.5,
       text: "Love this vase. Shipping took a bit longer than expected but it arrived safely. Definitely will order again.",
       date: "6 weeks ago",
-      avatar: "/avatars/jasmine.jpg",
+      avatar: "/avatars/john-kimani.webp",
     },
   ],
 };
