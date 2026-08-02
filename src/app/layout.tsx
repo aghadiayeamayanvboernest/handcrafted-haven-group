@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { auth } from "@/auth";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -25,18 +26,20 @@ export const metadata: Metadata = {
     "A virtual marketplace for artisans to showcase and sell unique handcrafted items.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html
       lang="en"
       className={`${playfair.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
+        <Navbar user={session?.user ?? null} />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>
