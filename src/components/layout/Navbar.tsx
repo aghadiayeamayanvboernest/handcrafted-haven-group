@@ -2,14 +2,49 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
+import { signOutAction } from "@/app/actions/auth";
+
+type NavUser = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+} | null;
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/browse", label: "Browse" },
   { href: "/sell", label: "Sell" },
 ] as const;
+
+function displayName(user: NonNullable<NavUser>): string {
+  return user.name ?? user.email ?? "Account";
+}
+
+function Avatar({ user }: { user: NonNullable<NavUser> }) {
+  if (user.image) {
+    return (
+      <Image
+        src={user.image}
+        alt=""
+        width={32}
+        height={32}
+        className="h-8 w-8 rounded-full object-cover"
+      />
+    );
+  }
+  const initial = displayName(user).charAt(0).toUpperCase();
+  return (
+    <span
+      className="flex h-8 w-8 items-center justify-center rounded-full bg-avatar text-sm font-bold text-primary"
+      aria-hidden="true"
+    >
+      {initial}
+    </span>
+  );
+}
 
 function Logo() {
   return (
@@ -43,7 +78,7 @@ function Logo() {
   );
 }
 
-export default function Navbar() {
+export default function Navbar({ user }: { user: NavUser }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -75,14 +110,34 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* Login — desktop */}
-        <div className="hidden md:block">
-          <Link
-            href="/login"
-            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            Login
-          </Link>
+        {/* Auth area — desktop */}
+        <div className="hidden items-center gap-3 md:flex">
+          {user ? (
+            <>
+              <span className="flex items-center gap-2">
+                <Avatar user={user} />
+                <span className="max-w-[10rem] truncate text-sm font-semibold text-graphite">
+                  {displayName(user)}
+                </span>
+              </span>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 px-4 py-2 text-sm font-semibold text-graphite transition-colors hover:bg-cream-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  Sign out
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Login
+            </Link>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -124,13 +179,33 @@ export default function Navbar() {
               </li>
             ))}
             <li className="pt-2">
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="block rounded-full bg-primary px-5 py-2 text-center text-base font-semibold text-cream transition-colors hover:bg-primary-dark"
-              >
-                Login
-              </Link>
+              {user ? (
+                <div className="space-y-2">
+                  <span className="flex items-center gap-2 px-3">
+                    <Avatar user={user} />
+                    <span className="truncate text-base font-semibold text-graphite">
+                      {displayName(user)}
+                    </span>
+                  </span>
+                  <form action={signOutAction}>
+                    <button
+                      type="submit"
+                      className="flex w-full items-center justify-center gap-1.5 rounded-full border border-primary/20 px-5 py-2 text-base font-semibold text-graphite transition-colors hover:bg-cream-deep"
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-full bg-primary px-5 py-2 text-center text-base font-semibold text-cream transition-colors hover:bg-primary-dark"
+                >
+                  Login
+                </Link>
+              )}
             </li>
           </ul>
         </div>
