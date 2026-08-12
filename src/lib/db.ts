@@ -146,19 +146,35 @@ export async function upsertSeller(input: {
   location?: string;
   bio?: string;
   avatar?: string;
+  ownerUsername?: string;
 }): Promise<void> {
-  const { error } = await supabaseAdmin.from("sellers").upsert(
-    {
-      id: input.id,
-      name: input.name,
-      specialty: input.specialty ?? null,
-      location: input.location ?? null,
-      bio: input.bio ?? null,
-      avatar: input.avatar ?? null,
-    },
-    { onConflict: "id" },
-  );
+  const row: Record<string, unknown> = {
+    id: input.id,
+    name: input.name,
+    specialty: input.specialty ?? null,
+    location: input.location ?? null,
+    bio: input.bio ?? null,
+    avatar: input.avatar ?? null,
+  };
+  if (input.ownerUsername) row.owner_username = input.ownerUsername.toLowerCase();
+
+  const { error } = await supabaseAdmin
+    .from("sellers")
+    .upsert(row, { onConflict: "id" });
   if (error) throw new Error(`upsertSeller: ${error.message}`);
+}
+
+/** The storefront id owned by a given user (their username), or null. */
+export async function getSellerIdByOwner(
+  username: string,
+): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from("sellers")
+    .select("id")
+    .eq("owner_username", username.toLowerCase())
+    .maybeSingle();
+  if (error) throw new Error(`getSellerIdByOwner: ${error.message}`);
+  return data?.id ?? null;
 }
 
 /* ---------- users (username / password auth) ---------- */

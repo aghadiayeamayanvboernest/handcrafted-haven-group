@@ -10,6 +10,9 @@ create table if not exists public.sellers (
   created_at    timestamptz default now()
 );
 
+-- Links a storefront to the user account that owns it (their username).
+alter table public.sellers add column if not exists owner_username text;
+
 create table if not exists public.users (
   id            uuid primary key default gen_random_uuid(),
   username      text unique not null,

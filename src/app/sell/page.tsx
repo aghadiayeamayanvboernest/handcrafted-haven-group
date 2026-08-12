@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Store, DollarSign, Users } from "lucide-react";
 import { auth } from "@/auth";
-import { deriveSellerId } from "@/lib/seller-identity";
-import { getProductsBySeller } from "@/lib/db";
+import { getProductsBySeller, getSellerIdByOwner } from "@/lib/db";
 import PageHeader from "@/components/layout/PageHeader";
 import SellForm from "@/components/sell/SellForm";
 import MyListings from "@/components/sell/MyListings";
@@ -34,9 +33,10 @@ export default async function SellPage() {
   // Route is auth-protected by middleware, so a session is guaranteed here.
   const session = await auth();
   const firstName = session?.user?.name?.split(" ")[0];
-  const myListings = session?.user
-    ? await getProductsBySeller(deriveSellerId(session.user))
-    : [];
+  const sellerId = session?.user
+    ? await getSellerIdByOwner(session.user.email ?? session.user.name ?? "")
+    : null;
+  const myListings = sellerId ? await getProductsBySeller(sellerId) : [];
 
   return (
     <>

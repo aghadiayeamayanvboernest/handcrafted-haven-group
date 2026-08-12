@@ -8,8 +8,9 @@ import {
   createProduct,
   deleteProduct,
   uploadProductImage,
+  upsertSeller,
+  getSellerIdByOwner,
 } from "@/lib/db";
-import { upsertSeller } from "@/lib/db";
 import type { Category } from "@/types";
 
 const CATEGORIES = ["Jewelry", "Pottery", "Textiles", "Candles", "Art"];
@@ -45,16 +46,21 @@ export async function createListingAction(
     return { ok: false, error: "Please fill in all fields correctly." };
   }
 
-  const sellerId = deriveSellerId(user);
+  const username = user.email ?? user.name ?? "";
   const slug = slugify(name);
 
-  // Ensure this user has a seller row (their storefront).
-  await upsertSeller({
-    id: sellerId,
-    name: user.name ?? "Artisan",
-    specialty: category,
-    avatar: user.image ?? undefined,
-  });
+  // Find this user's existing storefront, or create one owned by them.
+  let sellerId = await getSellerIdByOwner(username);
+  if (!sellerId) {
+    sellerId = deriveSellerId(user);
+    await upsertSeller({
+      id: sellerId,
+      name: user.name ?? "Artisan",
+      specialty: category,
+      avatar: user.image ?? undefined,
+      ownerUsername: username,
+    });
+  }
 
   // Upload the photo to Storage, or fall back to a category image.
   let image = `/categories/${category.toLowerCase()}.webp`;
@@ -84,7 +90,8 @@ export async function deleteListingAction(
   const user = session?.user;
   if (!user) return { ok: false, error: "Not signed in." };
 
-  const sellerId = deriveSellerId(user);
+  const sellerId = await getSellerIdByOwner(user.email ?? user.name ?? "");
+  if (!sellerId) return { ok: false, error: "No storefront found." };
   try {
     await deleteProduct(slug, sellerId);
   } catch (err) {
