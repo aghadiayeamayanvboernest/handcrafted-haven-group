@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { products } from "@/lib/data";
+import { getProducts } from "@/lib/db";
 import { CATEGORIES } from "@/lib/categories";
 import type { Category } from "@/types";
 import ProductBrowser from "@/components/product/ProductBrowser";
@@ -24,6 +24,7 @@ function resolveCategory(raw?: string): Category | "All" {
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const { category } = await searchParams;
   const initialCategory = resolveCategory(category);
+  const products = await getProducts();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

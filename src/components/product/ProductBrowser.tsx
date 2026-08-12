@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import type { Category, Product } from "@/types";
 import { CATEGORIES } from "@/lib/categories";
-import { getStoredListings } from "@/lib/listings";
 import ProductCard from "@/components/product/ProductCard";
 
 type SortKey = "featured" | "price-asc" | "price-desc" | "rating";
@@ -30,22 +29,9 @@ export default function ProductBrowser({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("featured");
 
-  // Merge in seller-created listings from this browser (localStorage).
-  const [listings, setListings] = useState<Product[]>([]);
-  useEffect(() => {
-    // localStorage is client-only, so it must be read after mount (not in SSR).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setListings(getStoredListings());
-  }, []);
-
-  const allProducts = useMemo(() => {
-    const seen = new Set(products.map((p) => p.slug));
-    return [...listings.filter((p) => !seen.has(p.slug)), ...products];
-  }, [products, listings]);
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const result = allProducts.filter((p) => {
+    const result = products.filter((p) => {
       const matchesCategory = category === "All" || p.category === category;
       const matchesQuery =
         q === "" ||
@@ -66,7 +52,7 @@ export default function ProductBrowser({
           (a, b) => Number(b.featured ?? false) - Number(a.featured ?? false),
         );
     }
-  }, [allProducts, category, query, sort]);
+  }, [products, category, query, sort]);
 
   const tabs: (Category | "All")[] = ["All", ...CATEGORIES];
 

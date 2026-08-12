@@ -1,53 +1,40 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/ui/Breadcrumb";
-import ClientListingDetail from "@/components/product/ClientListingDetail";
 import ProductGallery from "@/components/product/ProductGallery";
 import ProductInfo from "@/components/product/ProductInfo";
 import SellerMiniCard from "@/components/product/SellerMiniCard";
 import RelatedProducts from "@/components/product/RelatedProducts";
-import {
-  products,
-  getProductBySlug,
-  getRelatedProducts,
-  getSeller,
-} from "@/lib/data";
+import { getProductBySlug, getProducts, getSeller } from "@/lib/db";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
-  if (!product) {
-    return { title: "Product not found" };
-  }
-  return {
-    title: product.name,
-    description: product.description,
-  };
+  const product = await getProductBySlug(slug);
+  if (!product) return { title: "Product not found" };
+  return { title: product.name, description: product.description };
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
-  // Not in the static catalog → it may be a seller listing saved in the
-  // visitor's browser. Hand off to a client component that reads localStorage.
-  if (!product) return <ClientListingDetail slug={slug} />;
+  const product = await getProductBySlug(slug);
+  if (!product) notFound();
 
-  const seller = getSeller(product.sellerId);
-  const related = getRelatedProducts(product, 4);
+  const seller = await getSeller(product.sellerId);
+  const all = await getProducts();
+  const related = all
+    .filter((p) => p.category === product.category && p.slug !== product.slug)
+    .slice(0, 4);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <Breadcrumb
         items={[
           { label: "Home", href: "/" },
-          { label: product.category, href: `/products?category=${product.category}` },
+          { label: product.category, href: `/browse?category=${product.category.toLowerCase()}` },
           { label: product.name },
         ]}
       />
@@ -58,15 +45,15 @@ export default async function ProductDetailPage({ params }: PageProps) {
           alt={`${product.name} by ${seller?.name ?? "a Handcrafted Haven artisan"}`}
         />
         <ProductInfo product={product} />
-     </div>
+      </div>
 
       {seller && (
         <div className="mt-10">
           <SellerMiniCard seller={seller} />
-       </div>
+        </div>
       )}
 
       <RelatedProducts products={related} />
-   </div>
+    </div>
   );
 }

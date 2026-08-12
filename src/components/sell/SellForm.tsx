@@ -4,48 +4,34 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, UploadCloud } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
-import { addStoredListing } from "@/lib/listings";
-import type { Category, Product } from "@/types";
-
-/** Read a File into a data URL so it can be stored + rendered directly. */
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
+import { createListingAction } from "@/app/actions/listings";
 
 export default function SellForm() {
-  const [created, setCreated] = useState<Product | null>(null);
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
+  const [createdName, setCreatedName] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
+    setError(null);
     const form = event.currentTarget;
     const data = new FormData(form);
+    const name = String(data.get("title") ?? "");
 
-    const name = String(data.get("title") ?? "").trim();
-    const category = String(data.get("category") ?? "") as Category;
-    const price = Number(data.get("price") ?? 0);
-    const description = String(data.get("description") ?? "").trim();
-    const file = data.get("photo");
-
-    let image = `/categories/${category.toLowerCase()}.webp`; // fallback
-    if (file instanceof File && file.size > 0) {
-      try {
-        image = await readFileAsDataUrl(file);
-      } catch {
-        /* fall back to category image */
-      }
-    }
-
-    const product = addStoredListing({ name, category, price, description, image });
+    const result = await createListingAction(data);
     setSaving(false);
-    setCreated(product);
+
+    if (result.ok) {
+      setCreatedName(name);
+      setCreatedSlug(result.slug);
+      setPreview(null);
+      form.reset();
+    } else {
+      setError(result.error);
+    }
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -53,7 +39,7 @@ export default function SellForm() {
     setPreview(file ? URL.createObjectURL(file) : null);
   }
 
-  if (created) {
+  if (createdSlug) {
     return (
       <div
         role="status"
@@ -66,12 +52,12 @@ export default function SellForm() {
           Your listing is live!
         </h2>
         <p className="mt-2 text-graphite-soft">
-          <strong>{created.name}</strong> has been added. You can view it or find
-          it in Browse.
+          <strong>{createdName}</strong> was published to the marketplace —
+          anyone can see it now.
         </p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
-            href={`/products/${created.slug}`}
+            href={`/products/${createdSlug}`}
             className="rounded-[var(--radius)] bg-primary px-6 py-3 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             View your listing
@@ -85,10 +71,7 @@ export default function SellForm() {
         </div>
         <button
           type="button"
-          onClick={() => {
-            setCreated(null);
-            setPreview(null);
-          }}
+          onClick={() => setCreatedSlug(null)}
           className="mt-4 text-sm font-semibold text-graphite-soft underline hover:text-primary"
         >
           List another item
@@ -103,6 +86,12 @@ export default function SellForm() {
       className="space-y-5 rounded-[var(--radius)] border border-primary/10 bg-white p-6 shadow-sm sm:p-8"
       aria-label="List an item"
     >
+      {error && (
+        <p role="alert" className="rounded-[var(--radius)] bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {error}
+        </p>
+      )}
+
       <div>
         <label htmlFor="title" className="block text-sm font-semibold text-graphite">
           Item name

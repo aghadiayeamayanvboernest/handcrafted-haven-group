@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
+      // Supabase Storage — uploaded product images
+      {
+        protocol: "https",
+        hostname: "venrwlqxxlwjvmqbjxoc.supabase.co",
+      },
     ],
   },
 };
