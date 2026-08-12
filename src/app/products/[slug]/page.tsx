@@ -56,6 +56,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
         <ProductGallery
           src={product.image}
           alt={`${product.name} by ${seller?.name ?? "a Handcrafted Haven artisan"}`}
+          images={product.images}
         />
         <ProductInfo product={product} />
      </div>

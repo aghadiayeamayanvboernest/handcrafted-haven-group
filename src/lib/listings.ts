@@ -64,9 +64,11 @@ export function addStoredListing(input: {
   price: number;
   description: string;
   image: string;
+  images?: string[];
   sellerName?: string;
 }): Product {
   const slug = slugify(input.name);
+  const images = input.images && input.images.length > 0 ? input.images : [input.image];
   const product: Product = {
     id: slug,
     slug,
@@ -74,7 +76,8 @@ export function addStoredListing(input: {
     category: input.category,
     price: input.price,
     description: input.description,
-    image: input.image,
+    image: images[0] || input.image,
+    images,
     rating: 0,
     reviewCount: 0,
     sellerId: "you",
@@ -87,4 +90,38 @@ export function addStoredListing(input: {
   );
   notifyChange();
   return product;
+}
+
+export function updateStoredListing(
+  slug: string,
+  updatedData: {
+    name: string;
+    category: Category;
+    price: number;
+    description: string;
+    image: string;
+    images?: string[];
+  }
+): Product | undefined {
+  const existing = getStoredListings();
+  const index = existing.findIndex((p) => p.slug === slug);
+  if (index === -1) return undefined;
+
+  const current = existing[index];
+  const images = updatedData.images && updatedData.images.length > 0 ? updatedData.images : [updatedData.image];
+
+  const updatedProduct: Product = {
+    ...current,
+    name: updatedData.name,
+    category: updatedData.category,
+    price: updatedData.price,
+    description: updatedData.description,
+    image: images[0] || updatedData.image,
+    images,
+  };
+
+  existing[index] = updatedProduct;
+  window.localStorage.setItem(LISTINGS_KEY, JSON.stringify(existing));
+  notifyChange();
+  return updatedProduct;
 }

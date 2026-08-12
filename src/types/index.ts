@@ -28,5 +28,7 @@ export interface Product {
   description: string;
   /** Path under /public, e.g. "/products/ceramic-coffee-mug.webp". */
   image: string;
+  /** Additional product images (data URLs or paths). */
+  images?: string[];
   featured?: boolean;
 }
