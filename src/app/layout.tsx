@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { auth } from "@/auth";
+import { getCartCount } from "@/lib/db";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -32,6 +33,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  const cartCount = session?.user?.email
+    ? await getCartCount(session.user.email)
+    : 0;
 
   return (
     <html
@@ -39,7 +43,7 @@ export default async function RootLayout({
       className={`${playfair.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar user={session?.user ?? null} />
+        <Navbar user={session?.user ?? null} cartCount={cartCount} />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>

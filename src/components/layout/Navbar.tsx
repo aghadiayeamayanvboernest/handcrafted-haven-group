@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, LogOut, ChevronDown } from "lucide-react";
+import { Menu, X, LogOut, ChevronDown, ShoppingBag } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
 
 type NavUser = {
@@ -84,12 +84,33 @@ function Logo() {
   );
 }
 
-export default function Navbar({ user }: { user: NavUser }) {
+export default function Navbar({
+  user,
+  cartCount = 0,
+}: {
+  user: NavUser;
+  cartCount?: number;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const CartLink = (
+    <Link
+      href="/cart"
+      aria-label={`Cart${cartCount ? `, ${cartCount} items` : ""}`}
+      className="relative inline-flex items-center rounded-full p-2 text-graphite transition-colors hover:bg-cream-deep hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+      {cartCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-graphite">
+          {cartCount}
+        </span>
+      )}
+    </Link>
+  );
 
   return (
     <header className="sticky top-0 z-50 border-b border-primary/10 bg-cream/95 backdrop-blur supports-[backdrop-filter]:bg-cream/80">
@@ -142,7 +163,8 @@ export default function Navbar({ user }: { user: NavUser }) {
         </ul>
 
         {/* Auth area — desktop */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
+          {CartLink}
           {user ? (
             <details className="group relative [&_summary::-webkit-details-marker]:hidden">
               <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-cream-deep">
@@ -189,21 +211,24 @@ export default function Navbar({ user }: { user: NavUser }) {
           )}
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-md p-2 text-graphite hover:bg-cream-deep md:hidden"
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? (
-            <X className="h-6 w-6" aria-hidden="true" />
-          ) : (
-            <Menu className="h-6 w-6" aria-hidden="true" />
-          )}
-        </button>
+        {/* Mobile: cart + toggle */}
+        <div className="flex items-center gap-1 md:hidden">
+          {CartLink}
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md p-2 text-graphite hover:bg-cream-deep"
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? (
+              <X className="h-6 w-6" aria-hidden="true" />
+            ) : (
+              <Menu className="h-6 w-6" aria-hidden="true" />
+            )}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile menu */}

@@ -279,6 +279,237 @@ export async function updateUserPassword(
   if (error) throw new Error(`updateUserPassword: ${error.message}`);
 }
 
+/* ---------- cart ---------- */
+
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+export async function getCart(username: string): Promise<CartItem[]> {
+  const { data: rows, error } = await supabaseAdmin
+    .from("cart_items")
+    .select("product_slug, quantity")
+    .eq("username", username.toLowerCase())
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(`getCart: ${error.message}`);
+  if (!rows || rows.length === 0) return [];
+
+  const slugs = rows.map((r) => r.product_slug);
+  const { data: prods } = await supabaseAdmin
+    .from("products")
+    .select("*")
+    .in("slug", slugs);
+  const bySlug = new Map((prods as ProductRow[]).map((p) => [p.slug, toProduct(p)]));
+
+  return rows
+    .filter((r) => bySlug.has(r.product_slug))
+    .map((r) => ({ product: bySlug.get(r.product_slug)!, quantity: r.quantity }));
+}
+
+export async function getCartCount(username: string): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from("cart_items")
+    .select("quantity")
+    .eq("username", username.toLowerCase());
+  if (error) throw new Error(`getCartCount: ${error.message}`);
+  return (data ?? []).reduce((sum, r) => sum + r.quantity, 0);
+}
+
+export async function addToCart(username: string, slug: string): Promise<void> {
+  const uname = username.toLowerCase();
+  const { data: existing } = await supabaseAdmin
+    .from("cart_items")
+    .select("quantity")
+    .eq("username", uname)
+    .eq("product_slug", slug)
+    .maybeSingle();
+
+  const quantity = (existing?.quantity ?? 0) + 1;
+  const { error } = await supabaseAdmin
+    .from("cart_items")
+    .upsert(
+      { username: uname, product_slug: slug, quantity },
+      { onConflict: "username,product_slug" },
+    );
+  if (error) throw new Error(`addToCart: ${error.message}`);
+}
+
+export async function setCartQuantity(
+  username: string,
+  slug: string,
+  quantity: number,
+): Promise<void> {
+  const uname = username.toLowerCase();
+  if (quantity <= 0) {
+    await removeFromCart(uname, slug);
+    return;
+  }
+  const { error } = await supabaseAdmin
+    .from("cart_items")
+    .update({ quantity })
+    .eq("username", uname)
+    .eq("product_slug", slug);
+  if (error) throw new Error(`setCartQuantity: ${error.message}`);
+}
+
+export async function removeFromCart(username: string, slug: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("cart_items")
+    .delete()
+    .eq("username", username.toLowerCase())
+    .eq("product_slug", slug);
+  if (error) throw new Error(`removeFromCart: ${error.message}`);
+}
+
+export async function clearCart(username: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("cart_items")
+    .delete()
+    .eq("username", username.toLowerCase());
+  if (error) throw new Error(`clearCart: ${error.message}`);
+}
+
+/* ---------- orders ---------- */
+
+export interface OrderShipping {
+  fullName: string;
+  address: string;
+  city: string;
+  country: string;
+}
+
+export interface Order {
+  id: string;
+  createdAt: string;
+  total: number;
+  shipping: OrderShipping;
+  items: { name: string; price: number; quantity: number; slug: string }[];
+}
+
+export async function createOrder(
+  username: string,
+  shipping: OrderShipping,
+  items: CartItem[],
+): Promise<string> {
+  const total = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const { data: order, error } = await supabaseAdmin
+    .from("orders")
+    .insert({
+      username: username.toLowerCase(),
+      full_name: shipping.fullName,
+      address: shipping.address,
+      city: shipping.city,
+      country: shipping.country,
+      total,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`createOrder: ${error.message}`);
+
+  const rows = items.map((i) => ({
+    order_id: order.id,
+    product_slug: i.product.slug,
+    name: i.product.name,
+    price: i.product.price,
+    quantity: i.quantity,
+  }));
+  const { error: iErr } = await supabaseAdmin.from("order_items").insert(rows);
+  if (iErr) throw new Error(`createOrder items: ${iErr.message}`);
+
+  return order.id;
+}
+
+export async function getOrder(id: string): Promise<Order | null> {
+  const { data: order, error } = await supabaseAdmin
+    .from("orders")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`getOrder: ${error.message}`);
+  if (!order) return null;
+
+  const { data: items } = await supabaseAdmin
+    .from("order_items")
+    .select("name, price, quantity, product_slug")
+    .eq("order_id", id);
+
+  return {
+    id: order.id,
+    createdAt: order.created_at,
+    total: Number(order.total),
+    shipping: {
+      fullName: order.full_name ?? "",
+      address: order.address ?? "",
+      city: order.city ?? "",
+      country: order.country ?? "",
+    },
+    items: (items ?? []).map((i) => ({
+      name: i.name,
+      price: Number(i.price),
+      quantity: i.quantity,
+      slug: i.product_slug,
+    })),
+  };
+}
+
+/* ---------- reviews ---------- */
+
+export interface Review {
+  id: string;
+  username: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export async function getReviews(slug: string): Promise<Review[]> {
+  const { data, error } = await supabaseAdmin
+    .from("reviews")
+    .select("id, username, rating, comment, created_at")
+    .eq("product_slug", slug)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(`getReviews: ${error.message}`);
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    username: r.username,
+    rating: r.rating,
+    comment: r.comment ?? "",
+    createdAt: r.created_at,
+  }));
+}
+
+/** Add/update a user's review, then recompute the product's rating + count. */
+export async function addReview(input: {
+  slug: string;
+  username: string;
+  rating: number;
+  comment: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin.from("reviews").upsert(
+    {
+      product_slug: input.slug,
+      username: input.username.toLowerCase(),
+      rating: input.rating,
+      comment: input.comment,
+    },
+    { onConflict: "product_slug,username" },
+  );
+  if (error) throw new Error(`addReview: ${error.message}`);
+
+  const { data: all } = await supabaseAdmin
+    .from("reviews")
+    .select("rating")
+    .eq("product_slug", input.slug);
+  const ratings = (all ?? []).map((r) => r.rating);
+  const count = ratings.length;
+  const avg = count ? ratings.reduce((a, b) => a + b, 0) / count : 0;
+  await supabaseAdmin
+    .from("products")
+    .update({ rating: Math.round(avg * 10) / 10, review_count: count })
+    .eq("slug", input.slug);
+}
+
 /* ---------- storage ---------- */
 
 /** Uploads image bytes to Storage and returns the public URL. */

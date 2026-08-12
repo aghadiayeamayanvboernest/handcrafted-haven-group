@@ -40,6 +40,45 @@ create table if not exists public.products (
   created_at    timestamptz default now()
 );
 
+create table if not exists public.cart_items (
+  id            uuid primary key default gen_random_uuid(),
+  username      text not null,
+  product_slug  text not null,
+  quantity      integer not null default 1,
+  created_at    timestamptz default now(),
+  unique (username, product_slug)
+);
+
+create table if not exists public.orders (
+  id            uuid primary key default gen_random_uuid(),
+  username      text not null,
+  full_name     text,
+  address       text,
+  city          text,
+  country       text,
+  total         numeric not null default 0,
+  created_at    timestamptz default now()
+);
+
+create table if not exists public.order_items (
+  id            uuid primary key default gen_random_uuid(),
+  order_id      uuid references public.orders(id) on delete cascade,
+  product_slug  text,
+  name          text,
+  price         numeric,
+  quantity      integer not null default 1
+);
+
+create table if not exists public.reviews (
+  id            uuid primary key default gen_random_uuid(),
+  product_slug  text not null,
+  username      text not null,
+  rating        integer not null,
+  comment       text,
+  created_at    timestamptz default now(),
+  unique (product_slug, username)
+);
+
 -- Public read; writes happen server-side with the service-role key.
 alter table public.sellers  enable row level security;
 alter table public.products enable row level security;
@@ -56,8 +95,13 @@ grant usage on schema public to anon, authenticated, service_role;
 grant all privileges on public.sellers  to service_role;
 grant all privileges on public.products to service_role;
 grant all privileges on public.users    to service_role;
+grant all privileges on public.cart_items, public.orders, public.order_items, public.reviews to service_role;
 grant select on public.sellers  to anon, authenticated;
 grant select on public.products to anon, authenticated;
 
--- users: no public read (contains password hashes); server-only via service_role.
-alter table public.users enable row level security;
+-- Server-only tables (accessed via the service_role, which bypasses RLS).
+alter table public.users       enable row level security;
+alter table public.cart_items  enable row level security;
+alter table public.orders      enable row level security;
+alter table public.order_items enable row level security;
+alter table public.reviews     enable row level security;

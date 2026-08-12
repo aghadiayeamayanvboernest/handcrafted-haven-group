@@ -5,7 +5,9 @@ import ProductGallery from "@/components/product/ProductGallery";
 import ProductInfo from "@/components/product/ProductInfo";
 import SellerMiniCard from "@/components/product/SellerMiniCard";
 import RelatedProducts from "@/components/product/RelatedProducts";
-import { getProductBySlug, getProducts, getSeller } from "@/lib/db";
+import ReviewsSection from "@/components/product/ReviewsSection";
+import { getProductBySlug, getProducts, getSeller, getReviews } from "@/lib/db";
+import { auth } from "@/auth";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -23,8 +25,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const seller = await getSeller(product.sellerId);
-  const all = await getProducts();
+  const [seller, all, reviews, session] = await Promise.all([
+    getSeller(product.sellerId),
+    getProducts(),
+    getReviews(slug),
+    auth(),
+  ]);
   const related = all
     .filter((p) => p.category === product.category && p.slug !== product.slug)
     .slice(0, 4);
@@ -52,6 +58,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <SellerMiniCard seller={seller} />
         </div>
       )}
+
+      <ReviewsSection
+        slug={slug}
+        reviews={reviews}
+        canReview={Boolean(session?.user)}
+      />
 
       <RelatedProducts products={related} />
     </div>
