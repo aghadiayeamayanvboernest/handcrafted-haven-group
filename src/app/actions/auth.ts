@@ -11,7 +11,7 @@ export async function signOutAction() {
 
 type FormState = { error?: string } | undefined;
 
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+const USERNAME_RE = /^[a-zA-Z0-9_@.-]{3,20}$/;
 
 export async function loginAction(
   _prev: FormState,
@@ -47,7 +47,7 @@ export async function registerAction(
 
   if (!name) return { error: "Please enter your name." };
   if (!USERNAME_RE.test(username)) {
-    return { error: "Username must be 3–20 letters, numbers, or underscores." };
+    return { error: "Username must be 3–20 characters (letters, numbers, or _ @ . -)." };
   }
   if (password.length < 6) {
     return { error: "Password must be at least 6 characters." };

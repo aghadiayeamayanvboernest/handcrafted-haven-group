@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import { registerAction } from "@/app/actions/auth";
+import PasswordField from "@/components/auth/PasswordField";
 
 export default function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
   const [state, action, pending] = useActionState(registerAction, undefined);
@@ -46,30 +47,22 @@ export default function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
           type="text"
           autoComplete="username"
           required
-          pattern="[a-zA-Z0-9_]{3,20}"
-          title="3–20 letters, numbers, or underscores"
+          pattern="[a-zA-Z0-9_@.\-]{3,20}"
+          title="3–20 characters: letters, numbers, or _ @ . -"
           className="mt-1 w-full rounded-[var(--radius)] border border-primary/20 bg-cream/40 px-4 py-2.5 text-graphite focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         />
         <p className="mt-1 text-xs text-graphite-soft">
-          3–20 letters, numbers, or underscores.
+          3–20 characters — letters, numbers, or _ @ . -
         </p>
       </div>
 
-      <div>
-        <label htmlFor="password" className="block text-sm font-semibold text-graphite">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={6}
-          className="mt-1 w-full rounded-[var(--radius)] border border-primary/20 bg-cream/40 px-4 py-2.5 text-graphite focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        />
-        <p className="mt-1 text-xs text-graphite-soft">At least 6 characters.</p>
-      </div>
+      <PasswordField
+        id="password"
+        label="Password"
+        autoComplete="new-password"
+        minLength={6}
+        helpText="At least 6 characters."
+      />
 
       <button
         type="submit"
