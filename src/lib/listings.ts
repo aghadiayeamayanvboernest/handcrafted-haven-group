@@ -7,6 +7,15 @@ import type { Category, Product } from "@/types";
  */
 const LISTINGS_KEY = "hh:listings";
 
+/** Event name fired whenever the stored listings change. */
+export const LISTINGS_CHANGED = "hh:listings-changed";
+
+function notifyChange(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(LISTINGS_CHANGED));
+  }
+}
+
 /** URL-safe slug from a product name (with a short suffix for uniqueness). */
 export function slugify(name: string): string {
   const base = name
@@ -41,6 +50,14 @@ export function getStoredListingBySlug(slug: string): Product | undefined {
   return getStoredListings().find((p) => p.slug === slug);
 }
 
+/** Remove a listing by slug; returns the remaining listings. */
+export function removeStoredListing(slug: string): Product[] {
+  const remaining = getStoredListings().filter((p) => p.slug !== slug);
+  window.localStorage.setItem(LISTINGS_KEY, JSON.stringify(remaining));
+  notifyChange();
+  return remaining;
+}
+
 export function addStoredListing(input: {
   name: string;
   category: Category;
@@ -68,5 +85,6 @@ export function addStoredListing(input: {
     LISTINGS_KEY,
     JSON.stringify([product, ...existing]),
   );
+  notifyChange();
   return product;
 }

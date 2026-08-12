@@ -3,6 +3,7 @@ import { Store, DollarSign, Users } from "lucide-react";
 import { auth } from "@/auth";
 import PageHeader from "@/components/layout/PageHeader";
 import SellForm from "@/components/sell/SellForm";
+import MyListings from "@/components/sell/MyListings";
 
 export const metadata: Metadata = {
   title: "Sell",
@@ -73,6 +74,8 @@ export default async function SellPage() {
             <SellForm />
           </div>
         </div>
+
+        <MyListings />
       </div>
     </>
   );
