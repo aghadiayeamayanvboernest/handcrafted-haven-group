@@ -72,7 +72,7 @@ export default function ClientListingDetail({ slug }: { slug: string }) {
       />
 
       <div className="mt-6 grid gap-8 md:grid-cols-2 lg:gap-12">
-        <ProductGallery src={product.image} alt={product.name} />
+        <ProductGallery src={product.image} alt={product.name} images={product.images} />
         <ProductInfo product={product} />
       </div>
 
