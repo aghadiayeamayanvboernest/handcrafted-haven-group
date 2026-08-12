@@ -27,6 +27,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             width={800}
             height={800}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            unoptimized={product.image.startsWith("data:")}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>

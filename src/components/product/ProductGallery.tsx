@@ -15,6 +15,7 @@ export default function ProductGallery({ src, alt }: ProductGalleryProps) {
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
           priority
+          unoptimized={src.startsWith("data:")}
           className="object-cover"
         />
     </div>

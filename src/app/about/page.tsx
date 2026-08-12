@@ -20,7 +20,7 @@ const VALUES = [
 const STATS = [
   { value: "200+", label: "Independent artisans" },
   { value: "30", label: "Countries represented" },
-  { value: "12k", label: "Treasures sold" },
+  { value: "12k+", label: "Treasures sold" },
 ];
 
 export default function AboutPage() {

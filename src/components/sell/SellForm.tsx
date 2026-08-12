@@ -1,19 +1,59 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Check, UploadCloud } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
+import { addStoredListing } from "@/lib/listings";
+import type { Category, Product } from "@/types";
+
+/** Read a File into a data URL so it can be stored + rendered directly. */
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function SellForm() {
-  const [submitted, setSubmitted] = useState(false);
+  const [created, setCreated] = useState<Product | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // No backend yet — persisting listings needs a database (future card).
-    setSubmitted(true);
+    setSaving(true);
+    const form = event.currentTarget;
+    const data = new FormData(form);
+
+    const name = String(data.get("title") ?? "").trim();
+    const category = String(data.get("category") ?? "") as Category;
+    const price = Number(data.get("price") ?? 0);
+    const description = String(data.get("description") ?? "").trim();
+    const file = data.get("photo");
+
+    let image = `/categories/${category.toLowerCase()}.webp`; // fallback
+    if (file instanceof File && file.size > 0) {
+      try {
+        image = await readFileAsDataUrl(file);
+      } catch {
+        /* fall back to category image */
+      }
+    }
+
+    const product = addStoredListing({ name, category, price, description, image });
+    setSaving(false);
+    setCreated(product);
   }
 
-  if (submitted) {
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    setPreview(file ? URL.createObjectURL(file) : null);
+  }
+
+  if (created) {
     return (
       <div
         role="status"
@@ -23,16 +63,33 @@ export default function SellForm() {
           <Check className="h-7 w-7" aria-hidden="true" />
         </span>
         <h2 className="mt-4 text-xl font-bold text-graphite">
-          Listing submitted!
+          Your listing is live!
         </h2>
         <p className="mt-2 text-graphite-soft">
-          Thanks — your item has been received. (This is a demo; listings
-          aren&apos;t saved yet.)
+          <strong>{created.name}</strong> has been added. You can view it or find
+          it in Browse.
         </p>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            href={`/products/${created.slug}`}
+            className="rounded-[var(--radius)] bg-primary px-6 py-3 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            View your listing
+          </Link>
+          <Link
+            href="/browse"
+            className="rounded-[var(--radius)] border border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-cream focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Go to Browse
+          </Link>
+        </div>
         <button
           type="button"
-          onClick={() => setSubmitted(false)}
-          className="mt-6 rounded-[var(--radius)] bg-primary px-6 py-3 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          onClick={() => {
+            setCreated(null);
+            setPreview(null);
+          }}
+          className="mt-4 text-sm font-semibold text-graphite-soft underline hover:text-primary"
         >
           List another item
         </button>
@@ -114,27 +171,44 @@ export default function SellForm() {
       </div>
 
       <div>
-        <label htmlFor="photo" className="block text-sm font-semibold text-graphite">
+        <span className="block text-sm font-semibold text-graphite">
           Product photo
-        </label>
+        </span>
         <label
           htmlFor="photo"
-          className="mt-1 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[var(--radius)] border border-dashed border-primary/30 bg-cream/40 px-4 py-8 text-center text-graphite-soft transition-colors hover:border-primary hover:text-primary"
+          className="mt-1 flex cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-[var(--radius)] border border-dashed border-primary/30 bg-cream/40 px-4 py-8 text-center text-graphite-soft transition-colors hover:border-primary hover:text-primary"
         >
-          <UploadCloud className="h-6 w-6" aria-hidden="true" />
-          <span className="text-sm font-semibold">
-            Click to upload a photo
-          </span>
-          <span className="text-xs">PNG, JPG or WEBP, up to 5MB</span>
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={preview}
+              alt="Selected product preview"
+              className="max-h-48 w-auto rounded-md object-contain"
+            />
+          ) : (
+            <>
+              <UploadCloud className="h-6 w-6" aria-hidden="true" />
+              <span className="text-sm font-semibold">Click to upload a photo</span>
+              <span className="text-xs">PNG, JPG or WEBP, up to 5MB</span>
+            </>
+          )}
         </label>
-        <input id="photo" name="photo" type="file" accept="image/*" className="sr-only" />
+        <input
+          id="photo"
+          name="photo"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="sr-only"
+        />
       </div>
 
       <button
         type="submit"
-        className="w-full rounded-[var(--radius)] bg-primary px-6 py-3 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        disabled={saving}
+        className="w-full rounded-[var(--radius)] bg-primary px-6 py-3 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60"
       >
-        Publish listing
+        {saving ? "Publishing…" : "Publish listing"}
       </button>
     </form>
   );

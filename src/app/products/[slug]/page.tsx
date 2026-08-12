@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import ClientListingDetail from "@/components/product/ClientListingDetail";
 import ProductGallery from "@/components/product/ProductGallery";
 import ProductInfo from "@/components/product/ProductInfo";
 import SellerMiniCard from "@/components/product/SellerMiniCard";
@@ -35,7 +35,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const product = getProductBySlug(slug);
-  if (!product) notFound();
+  // Not in the static catalog → it may be a seller listing saved in the
+  // visitor's browser. Hand off to a client component that reads localStorage.
+  if (!product) return <ClientListingDetail slug={slug} />;
 
   const seller = getSeller(product.sellerId);
   const related = getRelatedProducts(product, 4);
