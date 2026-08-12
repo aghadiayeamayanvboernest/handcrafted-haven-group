@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import type { Session } from "next-auth";
+import { signOutAction } from "@/lib/actions";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -43,9 +45,10 @@ function Logo() {
   );
 }
 
-export default function Navbar() {
+export default function Navbar({ session }: { session: Session | null }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const isLoggedIn = !!session?.user;
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -75,14 +78,30 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* Login — desktop */}
+        {/* Login / Account — desktop */}
         <div className="hidden md:block">
-          <Link
-            href="/login"
-            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            Login
-          </Link>
+          {isLoggedIn ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-graphite">
+                {session?.user?.name}
+              </span>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="rounded-full border border-primary px-5 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-cream focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  Sign Out
+                </button>
+              </form>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-cream transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Login
+            </Link>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -124,13 +143,24 @@ export default function Navbar() {
               </li>
             ))}
             <li className="pt-2">
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="block rounded-full bg-primary px-5 py-2 text-center text-base font-semibold text-cream transition-colors hover:bg-primary-dark"
-              >
-                Login
-              </Link>
+              {isLoggedIn ? (
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    className="block w-full rounded-full border border-primary px-5 py-2 text-center text-base font-semibold text-primary transition-colors hover:bg-primary hover:text-cream"
+                  >
+                    Sign Out
+                  </button>
+                </form>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-full bg-primary px-5 py-2 text-center text-base font-semibold text-cream transition-colors hover:bg-primary-dark"
+                >
+                  Login
+                </Link>
+              )}
             </li>
           </ul>
         </div>
