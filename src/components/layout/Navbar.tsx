@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, ChevronDown } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth";
 
 type NavUser = {
@@ -17,6 +17,12 @@ const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/browse", label: "Browse" },
   { href: "/sell", label: "Sell" },
+] as const;
+
+const ABOUT_LINKS = [
+  { href: "/about", label: "About us" },
+  { href: "/contact", label: "Contact" },
+  { href: "/privacy", label: "Privacy policy" },
 ] as const;
 
 function displayName(user: NonNullable<NavUser>): string {
@@ -108,6 +114,31 @@ export default function Navbar({ user }: { user: NavUser }) {
               </Link>
             </li>
           ))}
+
+          {/* About dropdown */}
+          <li className="relative">
+            <details className="group [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-semibold text-graphite transition-colors hover:text-primary">
+                About
+                <ChevronDown
+                  className="h-4 w-4 transition-transform group-open:rotate-180"
+                  aria-hidden="true"
+                />
+              </summary>
+              <ul className="absolute right-0 z-50 mt-3 w-48 rounded-[var(--radius)] border border-primary/10 bg-cream p-1 shadow-lg">
+                {ABOUT_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="block rounded-md px-3 py-2 text-sm font-semibold text-graphite transition-colors hover:bg-cream-deep hover:text-primary"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </li>
         </ul>
 
         {/* Auth area — desktop */}
@@ -178,6 +209,19 @@ export default function Navbar({ user }: { user: NavUser }) {
                 </Link>
               </li>
             ))}
+
+            {ABOUT_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-md px-3 py-2 text-base font-semibold text-graphite transition-colors hover:bg-cream-deep hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+
             <li className="pt-2">
               {user ? (
                 <div className="space-y-2">
