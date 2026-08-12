@@ -208,6 +208,7 @@ export async function createUser(input: {
   username: string;
   name: string;
   passwordHash: string;
+  location?: string;
 }): Promise<{ id: string; username: string; name: string }> {
   const { data, error } = await supabaseAdmin
     .from("users")
@@ -215,11 +216,67 @@ export async function createUser(input: {
       username: input.username.toLowerCase(),
       name: input.name,
       password_hash: input.passwordHash,
+      location: input.location ?? null,
     })
     .select("id, username, name")
     .single();
   if (error) throw new Error(error.message);
   return { id: data.id, username: data.username, name: data.name };
+}
+
+export interface UserProfile {
+  username: string;
+  name: string;
+  location: string;
+  bio: string;
+}
+
+export async function getUserProfile(
+  username: string,
+): Promise<UserProfile | null> {
+  const { data, error } = await supabaseAdmin
+    .from("users")
+    .select("username, name, location, bio")
+    .eq("username", username.toLowerCase())
+    .maybeSingle();
+  if (error) throw new Error(`getUserProfile: ${error.message}`);
+  if (!data) return null;
+  return {
+    username: data.username,
+    name: data.name ?? "",
+    location: data.location ?? "",
+    bio: data.bio ?? "",
+  };
+}
+
+/** Update a user's profile; also mirror to their storefront if they have one. */
+export async function updateUserProfile(
+  username: string,
+  input: { name: string; location: string; bio: string },
+): Promise<void> {
+  const uname = username.toLowerCase();
+  const { error } = await supabaseAdmin
+    .from("users")
+    .update({ name: input.name, location: input.location, bio: input.bio })
+    .eq("username", uname);
+  if (error) throw new Error(`updateUserProfile: ${error.message}`);
+
+  // Keep the public storefront in sync (if this user owns one).
+  await supabaseAdmin
+    .from("sellers")
+    .update({ name: input.name, location: input.location, bio: input.bio })
+    .eq("owner_username", uname);
+}
+
+export async function updateUserPassword(
+  username: string,
+  passwordHash: string,
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("users")
+    .update({ password_hash: passwordHash })
+    .eq("username", username.toLowerCase());
+  if (error) throw new Error(`updateUserPassword: ${error.message}`);
 }
 
 /* ---------- storage ---------- */

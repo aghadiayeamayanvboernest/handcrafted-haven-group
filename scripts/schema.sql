@@ -21,6 +21,10 @@ create table if not exists public.users (
   created_at    timestamptz default now()
 );
 
+-- Profile fields collected at signup / editable in Settings.
+alter table public.users add column if not exists location text;
+alter table public.users add column if not exists bio text;
+
 create table if not exists public.products (
   id            uuid primary key default gen_random_uuid(),
   slug          text unique not null,

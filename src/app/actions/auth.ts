@@ -43,6 +43,7 @@ export async function registerAction(
   const name = String(formData.get("name") ?? "").trim();
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const location = String(formData.get("location") ?? "").trim();
   const callbackUrl = String(formData.get("callbackUrl") ?? "/") || "/";
 
   if (!name) return { error: "Please enter your name." };
@@ -58,7 +59,7 @@ export async function registerAction(
 
   const passwordHash = await bcrypt.hash(password, 10);
   try {
-    await createUser({ username, name, passwordHash });
+    await createUser({ username, name, passwordHash, location });
   } catch {
     return { error: "Could not create your account. Please try again." };
   }

@@ -144,23 +144,41 @@ export default function Navbar({ user }: { user: NavUser }) {
         {/* Auth area — desktop */}
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
-            <>
-              <span className="flex items-center gap-2">
+            <details className="group relative [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-cream-deep">
                 <Avatar user={user} />
-                <span className="max-w-[10rem] truncate text-sm font-semibold text-graphite">
+                <span className="max-w-[9rem] truncate text-sm font-semibold text-graphite">
                   {displayName(user)}
                 </span>
-              </span>
-              <form action={signOutAction}>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 px-4 py-2 text-sm font-semibold text-graphite transition-colors hover:bg-cream-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                <ChevronDown
+                  className="h-4 w-4 text-graphite-soft transition-transform group-open:rotate-180"
+                  aria-hidden="true"
+                />
+              </summary>
+              <div className="absolute right-0 z-50 mt-2 w-48 rounded-[var(--radius)] border border-primary/10 bg-cream p-1 shadow-lg">
+                <Link
+                  href="/sell"
+                  className="block rounded-md px-3 py-2 text-sm font-semibold text-graphite transition-colors hover:bg-cream-deep hover:text-primary"
                 >
-                  <LogOut className="h-4 w-4" aria-hidden="true" />
-                  Sign out
-                </button>
-              </form>
-            </>
+                  My storefront
+                </Link>
+                <Link
+                  href="/settings"
+                  className="block rounded-md px-3 py-2 text-sm font-semibold text-graphite transition-colors hover:bg-cream-deep hover:text-primary"
+                >
+                  Settings
+                </Link>
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    className="flex w-full items-center gap-1.5 rounded-md px-3 py-2 text-left text-sm font-semibold text-graphite transition-colors hover:bg-cream-deep"
+                  >
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            </details>
           ) : (
             <Link
               href="/login"
@@ -231,6 +249,20 @@ export default function Navbar({ user }: { user: NavUser }) {
                       {displayName(user)}
                     </span>
                   </span>
+                  <Link
+                    href="/sell"
+                    onClick={() => setOpen(false)}
+                    className="block rounded-md px-3 py-2 text-base font-semibold text-graphite transition-colors hover:bg-cream-deep hover:text-primary"
+                  >
+                    My storefront
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setOpen(false)}
+                    className="block rounded-md px-3 py-2 text-base font-semibold text-graphite transition-colors hover:bg-cream-deep hover:text-primary"
+                  >
+                    Settings
+                  </Link>
                   <form action={signOutAction}>
                     <button
                       type="submit"

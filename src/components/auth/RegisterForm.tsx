@@ -38,6 +38,20 @@ export default function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
       </div>
 
       <div>
+        <label htmlFor="location" className="block text-sm font-semibold text-graphite">
+          Location <span className="font-normal text-graphite-soft">(optional)</span>
+        </label>
+        <input
+          id="location"
+          name="location"
+          type="text"
+          autoComplete="address-level2"
+          placeholder="e.g. Accra, Ghana"
+          className="mt-1 w-full rounded-[var(--radius)] border border-primary/20 bg-cream/40 px-4 py-2.5 text-graphite placeholder:text-graphite-soft/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        />
+      </div>
+
+      <div>
         <label htmlFor="username" className="block text-sm font-semibold text-graphite">
           Username
         </label>
