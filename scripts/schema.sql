@@ -10,6 +10,14 @@ create table if not exists public.sellers (
   created_at    timestamptz default now()
 );
 
+create table if not exists public.users (
+  id            uuid primary key default gen_random_uuid(),
+  username      text unique not null,
+  name          text,
+  password_hash text not null,
+  created_at    timestamptz default now()
+);
+
 create table if not exists public.products (
   id            uuid primary key default gen_random_uuid(),
   slug          text unique not null,
@@ -40,5 +48,9 @@ create policy "public read products" on public.products for select using (true);
 grant usage on schema public to anon, authenticated, service_role;
 grant all privileges on public.sellers  to service_role;
 grant all privileges on public.products to service_role;
+grant all privileges on public.users    to service_role;
 grant select on public.sellers  to anon, authenticated;
 grant select on public.products to anon, authenticated;
+
+-- users: no public read (contains password hashes); server-only via service_role.
+alter table public.users enable row level security;

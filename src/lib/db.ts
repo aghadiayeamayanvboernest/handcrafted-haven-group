@@ -161,6 +161,51 @@ export async function upsertSeller(input: {
   if (error) throw new Error(`upsertSeller: ${error.message}`);
 }
 
+/* ---------- users (username / password auth) ---------- */
+
+export interface DbUser {
+  id: string;
+  username: string;
+  name: string | null;
+  passwordHash: string;
+}
+
+export async function getUserByUsername(
+  username: string,
+): Promise<DbUser | null> {
+  const { data, error } = await supabaseAdmin
+    .from("users")
+    .select("id, username, name, password_hash")
+    .eq("username", username.toLowerCase())
+    .maybeSingle();
+  if (error) throw new Error(`getUserByUsername: ${error.message}`);
+  if (!data) return null;
+  return {
+    id: data.id,
+    username: data.username,
+    name: data.name,
+    passwordHash: data.password_hash,
+  };
+}
+
+export async function createUser(input: {
+  username: string;
+  name: string;
+  passwordHash: string;
+}): Promise<{ id: string; username: string; name: string }> {
+  const { data, error } = await supabaseAdmin
+    .from("users")
+    .insert({
+      username: input.username.toLowerCase(),
+      name: input.name,
+      password_hash: input.passwordHash,
+    })
+    .select("id, username, name")
+    .single();
+  if (error) throw new Error(error.message);
+  return { id: data.id, username: data.username, name: data.name };
+}
+
 /* ---------- storage ---------- */
 
 /** Uploads image bytes to Storage and returns the public URL. */
